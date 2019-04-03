@@ -1,34 +1,41 @@
 ClockFace {
 	var <starttime, <tempo, <>inc, <cursecs, isPlaying = false, <clock, <window, timeString;
-	var remFun, <mod, start, <>onMod, <>onBeat;
-	
-	*new{ arg starttime = 0, tempo = 1, inc = 0.1;
-		^super.newCopyArgs(starttime, tempo, inc).init;
+	var remFun, <mod, startBeats, <>onMod, <>onBeat;
+
+	*new{ arg starttime = 0, tempo = 1, inc = 0.1, alwaysOnTop=false;
+		^super.newCopyArgs(starttime, tempo, inc).init(alwaysOnTop);
 		}
-		
-	init {
+
+	init {|alwaysOnTop = false|
 		cursecs = starttime;
 		this.digitalGUI;
+		this.alwaysOnTop = alwaysOnTop;
 		}
-		
+
+	start { this.play; }
+
+	alwaysOnTop_ {|bool|
+		^window.alwaysOnTop_(bool);
+	}
+
 	play {
 		var cur, last, floor;
 		clock = TempoClock.new(tempo);
-		start = clock.elapsedBeats;
+		startBeats = clock.elapsedBeats;
 		remFun = {this.stop};
 		CmdPeriod.add(remFun);
 		last = 0.0;
 		isPlaying = true;
 		clock.sched(inc, {
-			cur = clock.elapsedBeats - start + starttime;
+			cur = clock.elapsedBeats - startBeats + starttime;
 			mod.notNil.if({
 				cur = cur%mod;
 				(cur < last).if({
-					{onMod.value; 
+					{onMod.value;
 					onBeat.value(cur.floor.asInt);
 					}.defer;
 					});
-				});				
+				});
 			this.cursecs_(cur, false);
 			onBeat.notNil.if({
 				(((floor = cur.floor) - last.floor) == 1).if({
@@ -39,19 +46,19 @@ ClockFace {
 			inc;
 			})
 		}
-	
+
 	cursecs_ {arg curtime, updateStart = true;
 		var curdisp;
 		cursecs = curtime;
 		curdisp = curtime.asTimeString;
 		curdisp = curdisp[0 .. (curdisp.size-3)];
 		updateStart.if({starttime = cursecs; (isPlaying).if({
-			start = clock.elapsedBeats;
+			startBeats = clock.elapsedBeats;
 			});
 		});
 		{timeString.string_(curdisp)}.defer;
 		}
-		
+
 	stop {
 		starttime = cursecs;
 		isPlaying = false;
@@ -59,12 +66,12 @@ ClockFace {
 		CmdPeriod.remove(remFun);
 		clock.stop;
 		}
-	
+
 	tempo_ {arg newBPS = 1;
 		tempo = newBPS;
 		isPlaying.if({clock.tempo_(tempo)});
 		}
-		
+
 	mod_ {arg newMod = 0;
 		(newMod == 0).if({
 			mod = nil;
@@ -72,7 +79,7 @@ ClockFace {
 			mod = newMod;
 			})
 		}
-	
+
 	digitalGUI {
 		window = GUI.window.new("Digital Clock", Rect(10, 250, 450, 110)).front;
 		timeString = GUI.staticText.new(window, Rect(0, 0, 430, 100))
