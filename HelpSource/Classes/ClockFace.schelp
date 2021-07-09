@@ -34,14 +34,14 @@ Stops the clock
 
 
 
-METHOD:: cursecs_
+METHOD:: cursecs
 sets the time on the clock to curtime. curtime is passed in seconds.
 
 ARGUMENT:: curtime
 new time in seconds
 
 
-METHOD:: tempo_
+METHOD:: tempo
 	sets the current tempo in beats per second. Adjusts the internal TempoClock.
 
 ARGUMENT:: newBPS
